@@ -1,0 +1,241 @@
+#include "Input.h"
+#include "ColumnNames.h"
+#include "CommonFunctions.h"
+
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+// Function to look at the first row of the input file
+// and  save the column location of each of the required columns
+int Input::InputPositions(string& str){
+	
+	int i = 0;
+	size_t p(0);
+
+	do {
+		++i;
+		p = str.find(',');
+		string tmp = str.substr(0, p);
+		if (p == -1) tmp = str;
+		while (tmp[0] == ' ') tmp.erase(0, 1);
+		if (tmp[0] == '\"'){
+			tmp.erase(0, 1);
+			tmp.erase(tmp.size() - 1, 1);
+		}
+		Capitalize(tmp);
+
+		if (tmp.compare(ColumnNames::Resource) == 0) pos.resource = i;
+		else if (tmp.compare(ColumnNames::PostDate) == 0) pos.post_date = i;
+		else if (tmp.compare(ColumnNames::PeriodEnding) == 0) pos.period_end = i;
+		else if (tmp.compare(ColumnNames::ProjectName) == 0) pos.project_name = i;
+		else if (tmp.compare(ColumnNames::RawHoursSat) == 0) pos.raw_hours.sat = i;
+		else if (tmp.compare(ColumnNames::RawHoursSun) == 0) pos.raw_hours.sun = i;
+		else if (tmp.compare(ColumnNames::RawHoursMon) == 0) pos.raw_hours.mon = i;
+		else if (tmp.compare(ColumnNames::RawHoursTue) == 0) pos.raw_hours.tues = i;
+		else if (tmp.compare(ColumnNames::RawHoursWed) == 0) pos.raw_hours.wed = i;
+		else if (tmp.compare(ColumnNames::RawHoursThu) == 0) pos.raw_hours.thurs = i;
+		else if (tmp.compare(ColumnNames::RawHoursFri) == 0) pos.raw_hours.fri = i;
+		
+		str.erase(0, p + 1);
+	
+	} while (p != -1);
+
+	if (pos.resource == 0) return 1; // 1 is returned if "Resource Name" is not found
+	if (pos.post_date == 0) return 2; // 2 is returned if "Post Date" is not found
+	if (pos.period_end == 0) return 3; // 3 is returned if "Period End" is not found
+	if (pos.project_name == 0) return 4; // 4 is returned if "Project Name" is not found
+	if (pos.raw_hours.sat == 0) return 5; // 5 is returned if "Raw Hours -Saturday" is not found
+	if (pos.raw_hours.sun == 0) return 6; // 6 is returned if "Raw Hours -Sunday" is not found
+	if (pos.raw_hours.mon == 0) return 7; // 7 is returned if "Raw Hours -Monday" is not found
+	if (pos.raw_hours.tues == 0) return 8; // 8 is returned if "Raw Hours -Tuesday" is not found
+	if (pos.raw_hours.wed == 0) return 9; // 9 is returned if "Raw Hours -Wednesday" is not found
+	if (pos.raw_hours.thurs == 0) return 10; // 10 is returned if "Raw Hours -Thursday" is not found
+	if (pos.raw_hours.fri == 0) return 11; // 11 is returned if "Raw Hours -Friday" is not found
+
+	POSITION_FILLED = true;
+	return (0);
+}
+
+void Input::DisplayPositions(){
+	if (POSITION_FILLED)
+		cout << "The Positions are all filled up!\n";
+	else
+		cout << "The Positions are NOT all filled up!\n";
+
+	cout << "The position of \"" << ColumnNames::Resource << "\" Column = " << pos.resource << endl;
+	cout << "The position of \"" << ColumnNames::PostDate << "\" Column = " << pos.post_date << endl;
+	cout << "The position of \"" << ColumnNames::PeriodEnding << "\" Column = " << pos.period_end << endl; 
+	cout << "The position of \"" << ColumnNames::ProjectName << "\" Column = " << pos.project_name << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursSat << "\" Column = " << pos.raw_hours.sat << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursSun << "\" Column = " << pos.raw_hours.sun << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursMon << "\" Column = " << pos.raw_hours.mon << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursTue << "\" Column = " << pos.raw_hours.tues << endl;	
+	cout << "The position of \"" << ColumnNames::RawHoursWed << "\" Column = " << pos.raw_hours.wed << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursThu << "\" Column = " << pos.raw_hours.thurs << endl;
+	cout << "The position of \"" << ColumnNames::RawHoursFri << "\" Column = " << pos.raw_hours.fri << endl;
+}
+
+// Push the data at the end of the vector
+int Input::PushData(string& str){
+	
+	if (!POSITION_FILLED) {
+		cout << "ERROR: Attempted to Extract the Data when the column position ";
+		cout << "is not saved!\n";
+		return 1; // Unsuccessful
+	}
+	SingleInput tmp;
+	int cntr(0);
+	int ii(0);
+	long Hash(0);
+	string hash_str;
+	
+	while (str.size() != 0){
+		++cntr;
+		std::string tmp_str = FindNextItem(str);
+		if (!tmp.resource.Resource_Entered && cntr == pos.resource) tmp.resource.Insert(tmp_str);
+		if (!tmp.post_date.Date_Entered && cntr == pos.post_date) tmp.post_date.Insert(tmp_str);
+		if (!tmp.period_end.Date_Entered && cntr == pos.period_end) tmp.period_end.Insert(tmp_str);
+		if (tmp.project_name.size() == 0 && cntr == pos.project_name) tmp.project_name = tmp_str;
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.sat){
+			++ii; tmp.raw_hours.sat = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.sun){
+			++ii; tmp.raw_hours.sun = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.mon){
+			++ii; tmp.raw_hours.mon = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.tues){
+			++ii; tmp.raw_hours.tues = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.wed){
+			++ii; tmp.raw_hours.wed = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.thurs){
+			++ii; tmp.raw_hours.thurs = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (!tmp.raw_hours.RawHours_Entered && cntr == pos.raw_hours.fri){
+			++ii; tmp.raw_hours.fri = ConvertStringToNumber<float>(tmp_str);
+		}
+		if (ii == 7) tmp.raw_hours.RawHours_Entered = true;
+		
+		if (tmp.resource.Resource_Entered && tmp.post_date.Date_Entered && tmp.period_end.Date_Entered
+			&& tmp.project_name.size() > 0 && tmp.raw_hours.RawHours_Entered) break;
+	}
+	
+//	cout << tmp.resource.first << " " << tmp.resource.second << ", ";
+//	cout << "Post Date = " << tmp.post_date << ", Period Ending = ";
+//	cout << tmp.period_end << ", Project Name = " << tmp.project_name;
+//	cout << "\n";
+//	cout << "Hours: ";
+//	cout << "Sat  = " << tmp.raw_hours.sat << ", Sun = " << tmp.raw_hours.sun
+//		<< ", Mon  = " << tmp.raw_hours.mon << ", Tues = " << tmp.raw_hours.tues
+//		<< ", Wed  = " << tmp.raw_hours.wed << ", Thurs = " << tmp.raw_hours.thurs
+//		<< ", Fri  = " << tmp.raw_hours.fri << endl;
+
+	hash_str = tmp.resource.first + tmp.resource.second + tmp.project_name;
+	for (size_t i = 0; i < hash_str.size(); ++i){
+		Hash += (i + 1)*(int)(hash_str[i]);
+	}
+	tmp.comparekey = Hash;
+
+	if (l.empty()) l.push_back(tmp);
+	else{
+		if (tmp.comparekey < (l.begin())->comparekey) l.insert(l.begin(), tmp);
+		else if (tmp.comparekey > (l.end()-1)->comparekey) l.push_back(tmp);
+		else{
+			Iterator it = InsertData(tmp, l.begin(), l.end()-1);
+			if (it->comparekey == tmp.comparekey){
+				tmp.raw_hours.sat += it->raw_hours.sat;
+				tmp.raw_hours.sun += it->raw_hours.sun;
+				tmp.raw_hours.mon += it->raw_hours.mon;
+				tmp.raw_hours.tues += it->raw_hours.tues;
+				tmp.raw_hours.wed += it->raw_hours.wed;
+				tmp.raw_hours.thurs += it->raw_hours.thurs;
+				tmp.raw_hours.fri += it->raw_hours.fri;
+				int ii = it - l.begin();
+				l[ii].raw_hours = tmp.raw_hours;
+			}
+			else
+			{
+				if (it->comparekey > tmp.comparekey) l.insert(it, tmp);
+				else l.insert((it + 1), tmp);
+			}
+		}
+	}
+	return 0;
+}
+
+// Function to insert the data in the vector according to the comparekey
+vector<SingleInput>::iterator Input::InsertData(const SingleInput& inp, vector<SingleInput>::iterator first, vector<SingleInput>::iterator last){
+	if (first == last || first+1 == last) return(last);
+	vector<SingleInput>::iterator mid = first + (int)((last - first)/2);
+	if (first->comparekey < inp.comparekey && mid->comparekey > inp.comparekey) return InsertData(inp, first, mid);
+	else if (mid->comparekey < inp.comparekey && last->comparekey > inp.comparekey) return InsertData(inp, mid, last);
+	else if (first->comparekey == inp.comparekey) return first;
+	else if (last->comparekey == inp.comparekey) return last;
+	else return mid;
+}
+
+// Function to conduct the whole operation
+// i.e. save the required fields from an input file as the data and 
+// save the output file
+//TODO: Add functionality to change the folder name
+// return of 0 = operation successful
+// return of 1 = Input File not present (EXIT the PROGRAM)
+// return of 2 = All the Column names are not found in the Input File (EXIT THE PROGRAM)
+// return of 3 = Output File is not present (EXIT THE PROGRAM)
+// 
+int Input::Operate(){
+
+	if (!input_file.is_open()){
+		cout << "Input File Not Found\n";
+		cout << "Exiting...\n";
+		cout << "Press any key to continue..";
+		return(1);
+	}
+	else cout << "Input File is open...\n";
+
+	string str;
+	GetALine(input_file, str);
+	if (InputPositions(str) != 0){
+		cout << "ERROR: The positions are not correctly stored. Please look into the log file.\n";
+		DisplayPositions();
+		input_file.close();
+		return(2);
+	}
+	cout << "All the positions are correctly stored..\n";
+
+	while (GetALine(input_file, str)){
+		PushData(str);
+		cout << ".";
+	}
+	input_file.close();
+	cout << "\nAll the fields are read correctly... The input file is closed.\n";
+
+	if (!output_file.is_open()){
+		cout << "ERROR: The output file cannot be opened\n";
+		cout << "Exiting...\n";
+		return(3);
+	}
+	else
+		cout << "The Output file is open... \n";
+
+	// Label of the output file columns
+	string col_label1 = "EmployeeID,PayCode,WorkDate,LastName,FirstName,RawHours,";
+	string col_label2 = "PeriodStartDate,PeriodEnding,TrackCode,ProjectUID,";
+	string col_label3 = "ProjectName,CostCenter,CostCenterName,VENDOR";
+	string col_label = col_label1 + col_label2 + col_label3;
+
+	output_file << col_label << endl;
+	for (size_t c = 0; c < l.size(); ++c){
+		Output_All(output_file, l[c]);
+		cout << ".";
+	}
+	output_file.close();
+	cout << "\nAll the fields are written correctly... The output file is closed.\n";	
+	return (0);
+}
+

@@ -1,0 +1,22 @@
+#include <iostream>
+#include <math.h>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include "Input.h"
+#include "CommonFunctions.h"
+
+using namespace std;
+int main(int argc, char* argv[])
+{
+	string Input_File_Path = "./Files/input_csv.csv";
+	string Output_File_Path = "./Files/output_csv.csv"; 
+
+	Input inp(Input_File_Path, Output_File_Path);
+	int res = inp.Operate();
+
+	cout << "Please press any key to exit..";
+	cin.get();
+	if (res != 0) return (res);
+	return (0);
+}
